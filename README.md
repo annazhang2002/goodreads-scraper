@@ -1,6 +1,18 @@
 # Goodreads Web-scraper
 A Javascript tool that will scrape some data from goodreads on a user's ratings and favorite books
 
+Here is a very simple example of what running the program may look like
+
+    What is user's goodreads id? 117620737
+    117620737
+
+    GOODREADS DATA FOR ANNA
+    Anna's average rating is 3.736842105263158
+    Anna's goodreads' average rating is 4.083157894736842
+    Anna's ratings are on average 0.34631578947368413 lower than the goodreads community
+    Anna's biggest hot take is that Before the Coffee Gets Cold (Before the Coffee Gets Cold, #1) is a good book and deserves 5 stars even though goodreads says its 3.73 stars
+    Anna's biggest hot take is that Love Is a Mix Tape: Life and Loss, One Song at a Time is a bad book and deserves 2 stars even though goodreads says its 3.82 stars
+
 ## Basic Functions
 
 ### `ask()`
