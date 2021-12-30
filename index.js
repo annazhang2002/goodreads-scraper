@@ -5,9 +5,6 @@ const cheerio = require('cheerio');
 const express = require('express');
 const readline = require("readline");
 
-const books = [];
-var user = {};
-
 const app = express();
 const rl = readline.createInterface({
     input: process.stdin,
@@ -18,7 +15,7 @@ const rl = readline.createInterface({
 const ask = () => {
     rl.question("\nWhat is user's goodreads id? ", function (answers) {
         answers.split(' ').forEach(async id => {
-            main(id)
+            await main(id)
         })
     });
 }
@@ -55,14 +52,15 @@ const main = async id => {
     await axios(readBooksURL)
         .then(response => {
             const html = response.data
-            if (getUser(html)) {
-                console.log(`\nGOODREADS DATA FOR ${user.toUpperCase()}`)
-                getBooks(html);
-                ratingDiff();
-                goodHotTake();
-                badHotTake();
+            const res = getUser(html);
+            if (res.public) {
+                console.log(`\nGOODREADS DATA FOR ${res.name.toUpperCase()}`)
+                const books = getBooks(html);
+                ratingDiff(res.name, books);
+                goodHotTake(res.name, books);
+                badHotTake(res.name, books);
             } else {
-                console.log(`\n${user.toUpperCase()} HAS A PRIVATE PROFILE`)
+                console.log(`\n${res.name.toUpperCase()} HAS A PRIVATE PROFILE`)
             }
         }).catch(err => console.log(err))
 
@@ -89,12 +87,14 @@ const translateRating = (text) => {
 
 const getUser = (html) => {
     const $ = cheerio.load(html)
-    user = $('title').text().split(' ')[0]
-    return $('*', '#privateProfile').contents().length == 0
+    const name = $('title').text().split(' ')[0]
+    const public = $('*', '#privateProfile').contents().length == 0
+    return { name, public }
 }
 
 const getBooks = (html) => {
     const $ = cheerio.load(html)
+    const books = [];
     $('.bookalike.review').each(function () {
         const title = $('a', $('.field.title', this)).attr('title');
         const myRating = translateRating($('.value', $('.field.rating', this)).text());
@@ -105,9 +105,10 @@ const getBooks = (html) => {
             avgRating,
         })
     })
+    return books;
 }
 
-const ratingDiff = () => {
+const ratingDiff = (user, books) => {
     var sums = {
         me: 0,
         avg: 0,
@@ -121,7 +122,7 @@ const ratingDiff = () => {
     console.log(`${user}'s ratings are on average ${Math.abs((sums.me - sums.avg) / books.length)} ${(sums.me - sums.avg) > 0 ? 'higher' : 'lower'} than the goodreads community`)
 }
 
-const goodHotTake = () => {
+const goodHotTake = (user, books) => {
     var favBook = { diff: 0 };
     books.forEach((book) => {
         if (book.myRating - book.avgRating > favBook.diff) {
@@ -132,7 +133,7 @@ const goodHotTake = () => {
     console.log(`${user}'s biggest hot take is that ${favBook.title} is a good book and deserves ${favBook.myRating} stars even though goodreads says its ${favBook.avgRating} stars`)
 }
 
-const badHotTake = () => {
+const badHotTake = (user, books) => {
     var favBook = { diff: 0 };
     books.forEach((book) => {
         if (book.avgRating - book.myRating > favBook.diff) {
